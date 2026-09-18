@@ -5,6 +5,15 @@ extends SceneTree
 const ONLINE_PATH = "ModLoader/six666-BrotatoOnline"
 const PATCH_PATH = "ModLoader/CoopFix-OnlineMouseUI"
 
+class SteamInviteProbe:
+	extends Reference
+	var invites = []
+	var local_id = ""
+	func getSteamID():
+		return local_id
+	func activateGameOverlayInviteDialog(lobby_id) -> void:
+		invites.append(lobby_id)
+
 var _role = ""
 var _output = ""
 var _phase = "full"
@@ -167,6 +176,9 @@ func _run() -> void:
 	steam.set("_ready", false)
 	_session.set("_steam", null)
 	_session.set("_steam_ready", false)
+	var lan = _session.get("_lan_transport")
+	lan.set_script(load("res://tests/mouse_ui_test_lan_transport.gd"))
+	_session.set("_lan_discovery", null)
 	_run_data = get_root().get_node("RunData")
 	_menu = get_root().get_node("MenuData")
 	_run_data.call("reset")
@@ -180,10 +192,11 @@ func _run() -> void:
 		change_scene(str(_menu.get("character_selection_scene")))
 		yield(create_timer(0.3), "timeout")
 		_session.call("create_session", false)
+		_session.set("_lan_game_port", 29762)
 	else:
 		change_scene(str(_menu.get("title_screen_scene")))
 		yield(create_timer(0.8), "timeout")
-		_session.call("join_lan", "127.0.0.1", 27462)
+		_session.call("join_lan", "127.0.0.1", 29762)
 	while not _done and (not bool(_session.call("has_active_online_session")) or int(_session.call("get_session_member_count")) < _player_count or _api.call("get_local_player_indices").size() != 1 or current_scene == null or current_scene.filename != str(_menu.get("character_selection_scene"))):
 		yield(create_timer(0.1), "timeout")
 	if _done:
@@ -197,6 +210,12 @@ func _run() -> void:
 	_check(bool(_session.call("is_game_host")) == (_role == "host"), "actual LAN role")
 	_stage("lan_connected")
 	yield(create_timer(0.6), "timeout")
+	if _expect_patch and _role == "host":
+		yield(_test_lobby_invite(), "completed")
+	yield(_barrier("lobby-input-tested"), "completed")
+	if _phase == "lobby":
+		_finish()
+		return
 	yield(_barrier("character-ready"), "completed")
 	var element = _selection_element(0, "well_rounded")
 	if not _check(element != null, "real well-rounded character button"):
@@ -324,7 +343,46 @@ func _on_observed_press(key: String) -> void:
 		_record_selection_event("pressed", get_root().get_node("FocusEmulatorSignal").get("_control"))
 
 
-func _click(control, label: String, mouse_button: int = BUTTON_LEFT, hold_seconds: float = 0.0, local_point: Vector2 = Vector2(-1, -1)):
+func _test_lobby_invite():
+	var button = _session.get("_character_invite_button")
+	if not _check(is_instance_valid(button), "original Online lobby Invite button exists"):
+		yield(self, "idle_frame")
+		return
+	var probe = SteamInviteProbe.new()
+	probe.local_id = str(_session.get("_self_steam_id"))
+	var previous = {}
+	for key in ["_steam", "_steam_ready", "_steam_transport", "_lobby_id"]:
+		previous[key] = _session.get(key)
+	_session.set_process(false)
+	_session.set("_steam", probe)
+	_session.set("_steam_ready", true)
+	_session.set("_steam_transport", null)
+	_session.set("_lobby_id", 987654321)
+	_session.call("_update_character_invite_button_state")
+	_watch(button, "lobby-invite")
+	_check(not button.disabled and button.is_visible_in_tree(), "original Invite enabled in isolated Steam lobby fixture")
+	yield(_click(button, "lobby-invite"), "completed")
+	_check(int(_press_counts.get("lobby-invite", 0)) == 1, "mouse Invite emits exactly one original native pressed signal")
+	_check(probe.invites == [987654321], "mouse Invite reaches original Steam invite dialog call exactly once")
+	var background = _selection_element(0, "well_rounded")
+	_watch(background, "lobby-drag-background")
+	yield(_click(button, "lobby-invite-drag-out", BUTTON_LEFT, 0.0, Vector2(-1, -1), background), "completed")
+	_check(not button.is_pressed() and probe.invites == [987654321], "dragging outside Invite cancels its native press and releases it")
+	_check(int(_press_counts.get("lobby-drag-background", 0)) == 0, "native Invite drag-release cannot select underlying character")
+	yield(_click(button, "lobby-invite-control-drag-out", BUTTON_LEFT, 0.0, Vector2(-1, -1), background, true), "completed")
+	_check(not button.is_pressed() and probe.invites == [987654321], "Ctrl during native Invite drag preserves its outside-release cancellation")
+	_check(not bool(get_root().get_node(PATCH_PATH + "/MouseRouter").get("_native_lobby_press")), "native Invite gesture finishes on release after Ctrl is released")
+	button.disabled = true
+	yield(_click(button, "lobby-invite-disabled"), "completed")
+	_check(probe.invites == [987654321], "disabled original Invite stays disabled and sends no invite dialog call")
+	background.disconnect("pressed", self, "_on_observed_press")
+	for key in previous:
+		_session.set(key, previous[key])
+	_session.call("_update_character_invite_button_state")
+	_session.set_process(true)
+
+
+func _click(control, label: String, mouse_button: int = BUTTON_LEFT, hold_seconds: float = 0.0, local_point: Vector2 = Vector2(-1, -1), release_control = null, control_during_drag: bool = false):
 	yield(self, "idle_frame")
 	if control == null or not is_instance_valid(control):
 		_check(false, label + " click target exists")
@@ -351,6 +409,19 @@ func _click(control, label: String, mouse_button: int = BUTTON_LEFT, hold_second
 	yield(self, "idle_frame")
 	if hold_seconds > 0.0:
 		yield(create_timer(hold_seconds), "timeout")
+	if release_control != null:
+		if control_during_drag:
+			yield(_held_key(KEY_CONTROL, true), "completed")
+		position = _input_position(release_control)
+		var outside = InputEventMouseMotion.new()
+		outside.position = position
+		outside.global_position = position
+		outside.button_mask = BUTTON_MASK_LEFT
+		outside.control = Input.is_key_pressed(KEY_CONTROL)
+		Input.parse_input_event(outside)
+		yield(self, "idle_frame")
+		if control_during_drag:
+			yield(_held_key(KEY_CONTROL, false), "completed")
 	var up = InputEventMouseButton.new()
 	up.button_index = mouse_button
 	up.position = position

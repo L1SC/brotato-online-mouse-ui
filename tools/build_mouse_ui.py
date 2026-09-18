@@ -15,6 +15,7 @@ SUPPORT = [
     "LICENSE", "tools/build_mouse_ui.py",
     "tools/run_mouse_ui_tests.py", "tools/run_damage_meter_tests.py",
     "tests/mouse_ui_lan_runtime.gd",
+    "tests/mouse_ui_test_lan_transport.gd",
 ]
 
 

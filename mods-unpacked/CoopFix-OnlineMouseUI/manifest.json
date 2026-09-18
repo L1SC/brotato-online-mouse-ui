@@ -1,7 +1,7 @@
 {
   "name": "OnlineMouseUI",
   "namespace": "CoopFix",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "description": "Mouse controls for Brotato Online selection, upgrades, crates, shop, inventory and pause menus.",
   "website_url": "",
   "dependencies": ["six666-BrotatoOnline"],

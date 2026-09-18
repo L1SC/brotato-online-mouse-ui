@@ -13,6 +13,7 @@ var _popup_press_started = false
 var _click_serial = 0
 var _drag_control = null
 var _drag_emulator = null
+var _native_lobby_press = false
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func owns_emulator(emulator) -> bool:
 
 func _process(delta: float) -> void:
 	if not is_online():
+		_native_lobby_press = false
 		_cancel_press()
 		return
 	if _native_overlay_active():
@@ -51,6 +53,11 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not event is InputEventMouse or not is_online():
+		return
+	# Keep the whole native gesture, including releasing outside the button.
+	if _native_lobby_press:
+		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
+			_native_lobby_press = false
 		return
 	if event.control or _native_overlay_active():
 		_cancel_press()
@@ -121,6 +128,10 @@ func _input(event: InputEvent) -> void:
 		return
 	var root = _input_root()
 	var hit = _hit_test(root, event.position, emulators)
+	if not hit.empty() and _is_native_lobby_button(hit[0]):
+		_cancel_press()
+		_native_lobby_press = event is InputEventMouseButton and event.pressed
+		return
 	if not hit.empty() and hit[1] == null:
 		hit = []
 	if not hit.empty() and (hit[0] is Slider or hit[0] is ScrollBar):
@@ -190,6 +201,13 @@ func _native_overlay_active() -> bool:
 	var scene = get_tree().current_scene
 	var settings = scene.get_node_or_null("BrotatoOnlineSettingsOverlay") if scene != null else null
 	return settings != null and settings.is_visible_in_tree()
+
+
+func _is_native_lobby_button(button) -> bool:
+	# Online adds these local Steam controls outside the player FE bases.
+	# Preserve its original pressed callbacks and native disabled state.
+	var session = _api.get_parent().get_node_or_null("BrotatoOnlineSessionManager")
+	return session != null and (button == session.get("_character_invite_button") or button == session.get("_continue_invite_button"))
 
 
 func _keep_ready_focus(emulator) -> bool:

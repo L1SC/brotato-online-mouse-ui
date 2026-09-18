@@ -42,6 +42,7 @@ def prepare_pack(game, destination, project_name):
         overlays = {
             "res://project.binary": project_settings(source.read(size), project_name),
             "res://tests/mouse_ui_lan_runtime.gd": (ROOT / "tests/mouse_ui_lan_runtime.gd").read_bytes(),
+            "res://tests/mouse_ui_test_lan_transport.gd": (ROOT / "tests/mouse_ui_test_lan_transport.gd").read_bytes(),
         }
         assert not any(MOD_ID in name for name in resources)
         for name in overlays:
@@ -74,16 +75,17 @@ def main():
     parser.add_argument("--online-zip", type=Path)
     parser.add_argument("--patch-zip", type=Path)
     parser.add_argument("--case", choices=list(CASES) + ["all"], default="both")
-    parser.add_argument("--phase", choices=["auto", "selection", "full"], default="auto", help="auto runs full coverage for all-patched cases, selection for baseline/mixed installs")
+    parser.add_argument("--phase", choices=["auto", "lobby", "selection", "full"], default="auto", help="auto runs full coverage for all-patched cases, selection for baseline/mixed installs")
     parser.add_argument("--timeout", type=int, default=150)
     args = parser.parse_args()
     game = args.game_dir.resolve()
     online = args.online_zip or game.parents[1] / "workshop/content/1942280/3741034628/six666-BrotatoOnline.zip"
-    patch = args.patch_zip or ROOT / ("dist/" + MOD_ID + "-1.0.0.zip")
+    version = json.loads((ROOT / ("mods-unpacked/" + MOD_ID + "/manifest.json")).read_text(encoding="utf-8"))["version_number"]
+    patch = args.patch_zip or ROOT / ("dist/" + MOD_ID + "-" + version + ".zip")
     check_version(online, "six666-BrotatoOnline", "6.6.6")
     selected = CASES if args.case == "all" else {args.case: CASES[args.case]}
     if any(any(installed.values()) for installed in selected.values()):
-        check_version(patch, MOD_ID, "1.0.0")
+        check_version(patch, MOD_ID, version)
     run_id = time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8]
     output = ROOT / ".local/mouse-ui-tests" / run_id
     output.mkdir(parents=True)

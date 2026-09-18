@@ -1,8 +1,12 @@
 # Brotato Online 鼠标界面补丁
 
-`CoopFix-OnlineMouseUI` 1.0.0 以 **six666-BrotatoOnline** 为必需前置，为当前联机合作界面提供鼠标操作。
+`CoopFix-OnlineMouseUI` 1.0.1 以 **six666-BrotatoOnline** 为必需前置，为当前联机合作界面提供鼠标操作。
 
 适配目标：Brotato **1.1.15.4**、游戏内置 ModLoader **6.2.0**、本机已安装 Brotato Online **6.6.6**。验证范围见 [验证记录](online-mouse-ui-verification.md)。
+
+## 1.0.1 更新
+
+修复创建大厅后“邀请好友”无法点击。大厅邀请按钮保留联机 mod 原有的 Steam 邀请处理，拖出按钮再松开会正常取消。
 
 ## 操作范围
 
@@ -16,13 +20,13 @@
 ## 安装
 
 1. 完全退出游戏，确保已安装并启用 Brotato Online。
-2. 将 `CoopFix-OnlineMouseUI-1.0.0.zip` 保持 ZIP 原样放到游戏安装目录的 `mods` 文件夹，**不要解压**。
+2. 将 `CoopFix-OnlineMouseUI-1.0.1.zip` 保持 ZIP 原样放到游戏安装目录的 `mods` 文件夹，**不要解压**。
 3. 启动游戏，在模组菜单启用 `OnlineMouseUI / CoopFix-OnlineMouseUI`，按提示重启。
 
 本机目标路径：
 
 ```text
-D:/Program Files (x86)/Steam/steamapps/common/Brotato/mods/CoopFix-OnlineMouseUI-1.0.0.zip
+D:/Program Files (x86)/Steam/steamapps/common/Brotato/mods/CoopFix-OnlineMouseUI-1.0.1.zip
 ```
 
 每名需要鼠标操作的玩家在自己的电脑上安装本补丁，建议房主和所有客户端都安装。所有联机成员仍须安装 Online。本补丁的加载依赖声明会让 Online 先加载，未安装前置时不能单独启用。
