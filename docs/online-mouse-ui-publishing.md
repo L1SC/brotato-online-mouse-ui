@@ -1,5 +1,21 @@
 # OnlineMouseUI 发布记录
 
+## 1.0.1 更新
+
+2026-09-19 更新既有条目 `3803857989`，修复创建大厅后原生邀请按钮的鼠标输入拦截。没有新建工坊条目，Steam 介绍仍无 GitHub 链接，必需项仍只有 Brotato Online `3741034628`。
+
+[Release v1.0.1](https://github.com/L1SC/brotato-online-mouse-ui/releases/tag/v1.0.1) 已发布安装包、源码包和两个 SHA256 文件。五种安装组合的回归全部通过，双人 / 四人进入第二波；邀请原回调到最外层 Steam 入口通过计数探针验证，未发送好友邀请。
+
+Steam 更新回调 result=1，服务端公开且未禁用，内容14511字节。实际下载仅包含 `CoopFix-OnlineMouseUI-1.0.1.zip`，与发布包逐字节一致，CRC通过，manifest版本1.0.1。完整服务端介绍与提交文本一致，无GitHub字符串。GitHub附件均uploaded，其SHA256与本地校验文件一致。
+
+安装 ZIP SHA256：`a7690dbb9efb128a489fbfc21107e1a5a9b891363dfbd8091de9d93a31d906fc`。
+
+源码 ZIP SHA256：`b3b6813d18eb1456eb9808c1ea2937580772fb39f8e4db9b79ffe5d60fadbdb4`（34126字节）。
+
+用户需完全退出游戏后重新启动以载入更新；手动安装应移除旧版ZIP，只保留1.0.1。
+
+## 1.0.0 首次发布
+
 发布日期：2026-09-19。版本：1.0.0。
 
 - 公开源码仓库：[L1SC/brotato-online-mouse-ui](https://github.com/L1SC/brotato-online-mouse-ui)。
