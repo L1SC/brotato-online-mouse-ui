@@ -15,6 +15,8 @@
 
 安装包下载：[Release v1.0.0](https://github.com/L1SC/brotato-online-mouse-ui/releases/tag/v1.0.0)。
 
+Steam 创意工坊：[Online Mouse UI / 联机鼠标操作补丁](https://steamcommunity.com/sharedfiles/filedetails/?id=3803857989)。请同时订阅必需前置 Brotato Online。
+
 ## 安装
 
 1. 完全退出游戏，确保已安装并启用 Brotato Online。
