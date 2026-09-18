@@ -1,0 +1,5 @@
+.local/
+.codex/
+dist/
+__pycache__/
+*.pyc
